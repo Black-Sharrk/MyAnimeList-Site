@@ -885,6 +885,14 @@
     let animes = [];
     let catalogue = [];
 
+    fetch("https://tonpseudo.github.io/myanimelist-site/catalogue.json")
+      .then(r => r.json())
+      .then(data => {
+        catalogue = data;
+        renderCatalogue();
+      });
+
+
     // Lecture compressée
     try {
       const savedAnimes = localStorage.getItem("animes");
@@ -1380,3 +1388,4 @@
   </script>
 </body>
 </html>
+
