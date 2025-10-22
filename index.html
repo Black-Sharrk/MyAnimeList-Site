@@ -899,15 +899,10 @@
     // Lecture compressée
     try {
       const savedAnimes = localStorage.getItem("animes");
-      const savedCatalogue = localStorage.getItem("catalogue");
 
       if (savedAnimes) {
         const decompressed = LZString.decompress(savedAnimes);
         animes = decompressed ? JSON.parse(decompressed) : [];
-      }
-      if (savedCatalogue) {
-        const decompressed = LZString.decompress(savedCatalogue);
-        catalogue = decompressed ? JSON.parse(decompressed) : [];
       }
     } catch (e) {
       console.error("Erreur chargement données :", e);
@@ -1391,6 +1386,7 @@
   </script>
 </body>
 </html>
+
 
 
 
