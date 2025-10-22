@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Anime List</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <style>
+    body {
+      font-family: "Trebuchet MS", sans-serif;
+      background: linear-gradient(135deg, #1f1f2e, #2c1c3c);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 { color: #ff6f61; font-size: 2.5em; text-shadow: 2px 2px 6px #000; margin-bottom: 10px; }
+    #anime-form, #tools, #catalogue-form { margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    input, button, select { padding: 10px; border-radius: 10px; border: none; font-size: 1em; }
+    input, select { background:#222336; color:#fff; outline: 1px solid #343652; }
+    button { background: #ff6f61; color: white; cursor: pointer; transition: 0.2s ease; }
+    button:hover { background: #ff3b2e; transform: translateY(-1px); }
+    .list, .catalogue-view { display: flex; gap: 40px; width: 90%; justify-content: space-around; flex-wrap: wrap; margin-top: 20px; transition: all 0.3s ease-in-out; }
+    .column, .catalogue { flex: 1; min-width: 300px; background: rgba(44, 44, 60, 0.6); border: 1px solid #343652; border-radius: 14px; padding: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.35); transition: all 0.3s ease-in-out; }
+    .hidden { display: none; }
+    h2 { text-align: center; color: #ffd369; text-shadow: 1px 1px 3px #000; margin-top: 6px; }
+    ul { list-style: none; padding: 0; margin: 10px 0 0 0; }
+    li { background: #2c2c3c; margin: 12px 0; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; border: 1px solid #3a3a4d; flex-wrap: wrap; }
+    .anime-img { width: 120px; height: 170px; object-fit: cover; border-radius: 8px; border: 2px solid #ff6f61; background:#111; flex: 0 0 auto; transition: transform 0.3s ease; cursor: pointer; }
+    .anime-img:hover { transform: scale(1.05); }
+    .anime-info { flex-grow: 1; min-width: 0; }
+    .anime-title { font-size: 1.3em; font-weight: bold; color: #ffd369; line-height: 1.2; word-break: break-word; transition: text-shadow 0.3s ease; cursor: pointer; }
+    .anime-title:hover { text-shadow: 0 0 10px #ffd369, 0 0 20px #ffd369; }
+    .anime-note { font-size: 1em; font-weight: bold; color: #ff9f43; margin-top: 4px; line-height: 1.2; word-break: break-word; transition: text-shadow 0.3s ease; }
+    .anime-note:hover { text-shadow: 0 0 10px #ffd369, 0 0 20px #ffd369; }
+    .anime-tags { font-size: 0.9em; font-weight: bold; color: #9ad0ec; margin-top: 4px; line-height: 1.2; word-break: break-word; transition: text-shadow 0.3s ease; }
+    .anime-tags:hover { text-shadow: 0 0 10px #ffd369, 0 0 20px #ffd369; }
+    .actions { display: flex; flex-direction: column; gap: 6px; }
+    .actions button { font-size: 0.85em; padding: 6px 8px; white-space: nowrap; }
+    #search { width: 220px; }
+    .active-filter { background: #ffd369; color: #000; }
+    .visually-hidden { position: absolute; left: -9999px; }
+    
+    .big-add-btn { display: block; margin: 20px auto; padding: 15px 30px; background: #4cafef; color: #fff; font-size: 1.2em; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.4); transition: background 0.3s; }
+    .big-add-btn:hover { background: #368ad6;}
+    .choice-btn { display: block; margin: 10px auto; padding: 12px 20px; background: #343652; color: #fff; border: none; border-radius: 10px; cursor: pointer; font-size: 1em; transition: background 0.3s; }
+    .choice-btn:hover { background: #4b4d70; }
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-content { background: #fff; padding: 20px; border-radius: 12px; min-width: 300px; max-width: 400px; text-align: center; }
+    .close { position: absolute; top: 10px; right: 15px; font-size: 1.5em; cursor: pointer; }
+
+
+
+
+    .hidden { display: none; }
+    .fixed { position: fixed; }
+    .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+    .bg-black { background-color: rgba(0,0,0,0.7); }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-center { justify-content: center; }
+    .z-50 { z-index: 9999; }
+
+
+
+    /* ✅ Styles pour la fenêtre modale */
+    #edit-modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #edit-modal.hidden { display: none; }
+    .modal-content {
+      background: #2c2c3c;
+      padding: 20px;
+      border-radius: 14px;
+      width: 500px;
+      max-width: 90%;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    .modal-content h2 {
+      color: #ffd369;
+      margin-bottom: 15px;
+    }
+    .modal-content input, .modal-content select {
+      width: 100%;
+      margin: 6px 0;
+    }
+    .modal-actions {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+
+    .hidden { display: none; }
+    #confirmModal.hidden {
+      display: none;
+    }
+
+    #confirmModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6); /* fond sombre semi-transparent */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+
+    #confirmModal .modal-content {
+      background: rgba(44,44,60,0.95); /* cadre sombre style liste */
+      border: 2px solid #ff6f61;
+      padding: 25px 30px;
+      border-radius: 16px;
+      min-width: 320px;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+      color: #fff;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    #confirmModal .modal-actions {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    #confirmModal .modal-actions button {
+      padding: 8px 18px;
+      border-radius: 10px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    #confirmModal .modal-actions button#confirmYes {
+      background: #ff6f61;
+      color: #fff;
+    }
+
+    #confirmModal .modal-actions button#confirmYes:hover {
+      background: #ff3b2e;
+    }
+
+    #confirmModal .modal-actions button#confirmNo {
+      background: #444464;
+      color: #fff;
+    }
+
+    #confirmModal .modal-actions button#confirmNo:hover {
+      background: #666688;
+    }
+
+    #message-container { position: fixed; bottom: 20px; right: 20px; background: rgba(44,44,60,0.95); color: #fff; padding: 12px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-size: 1em; font-weight: bold; z-index: 20000; opacity: 0; transform: translateY(20px); transition: all 0.3s ease-in-out; }
+    #message-container.show { opacity: 1; transform: translateY(0); }
+    #message-container.success { border: 2px solid #4caf50; color: #4caf50; }
+    #message-container.error { border: 2px solid #ff6f61; color: #ff6f61; }
+
+    #catalogue-search {
+      width: 350px; /* 🔧 ajuste à la taille que tu veux (300–500px conseillé) */
+      max-width: 90%; /* évite qu’elle déborde sur mobile */
+    }
+    #catalogue-add-btn {
+      display: block;
+      margin: 20px auto;
+      width: 400px;
+      max-width: 90%;
+      height: 60px;
+    }
+    #detail-view .anime-img {
+      margin-top: 100px; /* 🔧 ajuste la valeur comme tu veux */
+    }
+
+
+
+
+    /* Vue détaillée */
+    #detail-view .catalogue {
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    #detail-view h2 {
+      font-size: 2em;
+      color: #ffd369;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
+    }
+
+    #detail-view p {
+      font-size: 1.1em;
+      margin: 8px 0;
+      color: #e0e0e0;
+    }
+
+    #detail-view p strong {
+      color: #ff9f43;
+    }
+
+    #detail-view .anime-img {
+      border-radius: 12px;
+      margin-top: 10px; /* décalage vers le bas comme tu voulais */
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    }
+
+    #detail-view .actions button {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.95em;
+      background: #343652;
+      color: #fff;
+      transition: background 0.3s;
+    }
+
+    #detail-view .actions button:hover {
+      background: #4b4d70;
+    }
+
+    #detail-view .catalogue > div {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start; /* aligne bien les éléments */
+      flex-wrap: wrap;
+    }
+
+    #detail-view .anime-img {
+      border-radius: 12px;
+      margin-top: 0; /* on enlève le "décalage manuel" */
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      align-self: center; /* ✅ centre verticalement l’image par rapport au texte */
+    }
+
+    .logo {
+      width: 50px;
+      height: 50px;
+      vertical-align: middle;
+      margin-right: 10px;
+      border-radius: 8px; /* optionnel pour adoucir les bords */
+    }
+
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+</head>
+<body>
+  <h1>
+    <img src="logo.png" alt="Logo" class="logo">
+    Ma Liste d'Animés
+  </h1>
+  <form id="anime-form">
+    <button type="button" id="open-add-modal" class="big-add-btn">➕ Ajout d'un Nouvelle Animé</button>
+  </form>
+
+  <div id="stats"></div>
+
+  <div id="tools">
+    <input type="text" id="search" placeholder="🔎 Rechercher un animé...">
+    <select id="sort">
+      <option value="default">Trier par défaut</option>
+      <option value="alpha">Ordre alphabétique</option>
+      <option value="reverse">Ordre alphabétique inverse</option>
+      <option value="noteAsc">Note (croissant)</option>
+      <option value="noteDesc">Note (décroissant)</option>
+    </select>
+    <button type="button" id="filter-btn">📌 Animé En Attente De Suite</button>
+    <button type="button" id="catalogue-btn">📚 Catalogue</button>
+    <button type="button" id="export-btn">💾 Exporter ma liste</button>
+    <input type="file" id="import-input" accept=".json" style="display:none;">
+    <button type="button" id="import-btn">📂 Importer une liste</button>
+  </div>
+
+  <div class="list" id="main-view">
+    <div class="column" id="a-regarder-col"><h2 id="a-regarder-title">📌 À regarder</h2><ul id="a_regarder-list"></ul></div>
+    <div class="column" id="vu-col"><h2 id="vu-title">✅ Vu</h2><ul id="vu-list"></ul></div>
+  </div>
+
+  <div class="catalogue-view hidden" id="catalogue-view">
+    <div class="catalogue">
+      <h2>📚 Catalogue</h2>
+      <form id="catalogue-form">
+        <input type="text" id="catalogue-search" placeholder="🔎 Rechercher dans le catalogue...">
+      </form>
+      <h2><button id="catalogue-add-btn">➕ Ajouter un animé au catalogue</button></h2>
+      <ul id="catalogue-list"></ul>
+    </div>
+  </div>
+
+  <!-- ✅ Vue détaillée -->
+  <div class="hidden" id="detail-view" style="width:90%;margin-top:20px;">
+    <div class="catalogue">
+      <button type="button" id="back-btn">⬅️ Retour</button>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+  <!-- ✅ Fenêtre modale d'édition -->
+  <div id="edit-modal" class="hidden">
+    <div class="modal-content">
+      <h2>✏️ Éditer un animé</h2>
+      <form id="edit-form">
+        <input type="text" id="edit-name" placeholder="Nom de l'animé" required />
+        <input type="url" id="edit-image" placeholder="URL de l'affiche (optionnel)" />
+        <input type="number" id="edit-note" placeholder="Note /10" min="0" max="10" step="0.1" />
+	<input type="text" id="edit-tags" placeholder="Genres (séparés par des virgules)" />
+	<input type="number" id="edit-episodes" placeholder="Nombre d'épisodes" min="0" />
+	<input type="text" id="edit-description" placeholder="Description" />
+	<select id="edit-films">
+  	  <option value="false">Pas de films</option>
+  	  <option value="true">Films disponibles</option>
+	</select>
+        <select id="edit-status">
+          <option value="a_regarder">À regarder</option>
+          <option value="vu">Vu</option>
+        </select>
+        <select id="edit-completion">
+          <option value="">Statut (si vu)</option>
+          <option value="fini">Fini</option>
+          <option value="en_cours">En attente</option>
+        </select>
+        <label for="edit-language">Langue :</label>
+        <select id="edit-language">
+          <option value="VF">VF</option>
+          <option value="VO">VO</option>
+          <option value="VF & VO">VF & VO</option>
+        </select>
+        <div class="modal-actions">
+          <button type="submit">💾 Sauvegarder</button>
+          <button type="button" id="cancel-edit">❌ Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="add-choice-modal" class="modal hidden">
+    <div class="modal-content">
+      <span id="cancel-add-choice" class="close">&times;</span>
+      <h2>Choisir le type d’ajout</h2>
+      <button id="simple-add-btn" class="choice-btn">Ajout Simple</button>
+      <button id="complete-add-btn" class="choice-btn">Ajout Complet</button>
+    </div>
+  </div>
+
+  <div id="add-simple-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" id="close-simple-add">&times;</span>
+      <h2>Ajout Simple d’un Animé</h2>
+      <form id="simple-add-form">
+        <input type="text" id="simple-title" placeholder="Titre de l’animé" required>
+        <input type="text" id="simple-image" placeholder="URL de l’image (optionnel)">
+        <label for="simple-list">Ajouter dans :</label>
+        <select id="simple-list">
+          <option value="towatch">À regarder</option>
+          <option value="watched">Vu</option>
+        </select>
+        <label for="simple-list">Statut:</label>
+        <select id="simple-completion">
+	  <option value="en_cours">En_Attente</option>
+	  <option value="fini">Fini</option>
+	</select>
+
+        <input type="number" id="simple-note" placeholder="Note /10" min="0" max="10">
+
+        <button type="submit">Ajouter</button>
+      </form>
+    </div>
+  </div>
+  <div id="add-complete-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" id="close-complete-add">&times;</span>
+      <h2>Ajout Complet d’un Animé</h2>
+      <form id="complete-add-form">
+        <input type="text" id="complete-title" placeholder="Titre de l’animé" required>
+        <input type="url" id="complete-image" placeholder="URL de l’image (optionnel)">
+        
+
+        <label for="complete-status">Ajouter dans :</label>
+        <select id="complete-status">
+          <option value="">-</option>
+          <option value="a_regarder">À regarder</option>
+          <option value="vu">Vu</option>
+        </select>
+
+        <label for="complete-completion">Statut:</label>
+        <select id="complete-completion" class="hidden">
+          <option value="">—</option>
+          <option value="fini">Fini</option>
+          <option value="en_cours">En attente</option>
+        </select>
+
+        <input type="text" id="complete-tags" placeholder="Genres (séparés par des virgules)">
+        <input type="number" id="complete-episodes" placeholder="Nombre d’épisodes" min="0">
+        <input type="text" id="complete-description" placeholder="Description">
+
+        <label for="complete-films">Films :</label>
+        <select id="complete-films">
+          <option value="false">Pas de films</option>
+          <option value="true">Films disponibles</option>
+        </select>
+        <label for="complete-language">Langue :</label>
+        <select id="complete-language">
+          <option value="VF">VF</option>
+          <option value="VO">VO</option>
+          <option value="VF & VO">VF & VO</option>
+        </select>
+
+        <input type="number" id="complete-note" placeholder="Note /10" min="0" max="10" step="0.1">
+        <button type="submit">Ajouter</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- ✅ Fenêtre modale "Marquer vu" -->
+  <div id="mark-view-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>✅ Marquer comme vu</h2>
+      <form id="mark-view-form">
+        <label for="mark-note">Note /10 :</label>
+        <input type="number" id="mark-note" min="0" max="10" step="0.1">
+
+        <label for="mark-completion">Statut :</label>
+        <select id="mark-completion" required>
+          <option value="fini">Fini</option>
+          <option value="en_cours">En attente</option>
+        </select>
+
+        <div class="modal-actions">
+          <button type="submit">💾 Valider</button>
+          <button type="button" id="cancel-mark-view">❌ Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="confirmModal" class="hidden">
+    <div class="modal-content">
+      <p id="confirmMessage">Es-tu sûr de vouloir supprimer cet animé ?</p>
+      <div class="modal-actions">
+        <button id="confirmYes">Oui</button>
+        <button id="confirmNo">Non</button>
+      </div>
+    </div>
+  </div>
+  <div id="message-container" class="hidden"></div>
+  
+  <div id="add-catalogue-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" id="close-catalogue-add">&times;</span>
+      <h2>Ajout Complet d’un Animé au Catalogue</h2>
+      <form id="catalogue-add-form">
+        <input type="text" id="catalogue-title" placeholder="Titre de l’animé" required>
+        <input type="url" id="catalogue-image" placeholder="URL de l’image (optionnel)">
+        <input type="text" id="catalogue-tags" placeholder="Genres (séparés par des virgules)">
+        <input type="number" id="catalogue-episodes" placeholder="Nombre d’épisodes" min="0">
+        <input type="text" id="catalogue-description" placeholder="Description">
+        <label for="catalogue-films">Films :</label>
+        <select id="catalogue-films">
+          <option value="false">Pas de films</option>
+          <option value="true">Films disponibles</option>
+        </select>
+        <label for="catalogue-language">Langue :</label>
+        <select id="catalogue-language">
+          <option value="VF">VF</option>
+          <option value="VO">VO</option>
+          <option value="VF & VO">VF & VO</option>
+        </select>
+        <button type="submit">Ajouter au catalogue</button>
+      </form>
+    </div>
+  </div>
+
+
+  <script>
+    const catalogueAddBtn = document.getElementById("catalogue-add-btn");
+    const addCatalogueModal = document.getElementById("add-catalogue-modal");
+    const closeCatalogueAdd = document.getElementById("close-catalogue-add");
+    const catalogueAddForm = document.getElementById("catalogue-add-form");
+
+    if (catalogueAddBtn) {
+      catalogueAddBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        addCatalogueModal.classList.remove("hidden");
+      });
+    }
+
+    if (closeCatalogueAdd) {
+      closeCatalogueAdd.addEventListener("click", () => {
+        addCatalogueModal.classList.add("hidden");
+      });
+    }
+
+    if (catalogueAddForm) {
+      catalogueAddForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById("catalogue-title").value.trim();
+        const image = document.getElementById("catalogue-image").value.trim();
+        const tags = document.getElementById("catalogue-tags").value.split(",").map(t => t.trim()).filter(t => t);
+        const episodes = document.getElementById("catalogue-episodes").value ? parseInt(document.getElementById("catalogue-episodes").value, 10) : null;
+        const description = document.getElementById("catalogue-description").value.trim();
+        const films = document.getElementById("catalogue-films").value === "true";
+        const language = document.getElementById("catalogue-language").value;
+
+        if (!title) return;
+
+        // ✅ Ajout uniquement dans le catalogue
+        catalogue.push({
+          name: title,
+          image: image || null,
+          tags,
+          episodes,
+          description,
+          films,
+          language
+        });
+
+        saveDebounced();
+        renderCatalogue();
+        addCatalogueModal.classList.add("hidden");
+        catalogueAddForm.reset();
+
+        showMessage(`✅ "${title}" ajouté au catalogue !`, "success");
+      });
+    }
+
+
+    function showMessage(text, type = "success") {
+      const msgBox = document.getElementById("message-container");
+      if (!msgBox) return;
+
+      msgBox.textContent = text;
+      msgBox.className = ""; // reset classes
+      msgBox.classList.add("show", type);
+
+      setTimeout(() => {
+        msgBox.classList.remove("show");
+      }, 2500); // message disparaît après 2,5s
+    }
+
+    // Robuste : cible dynamiquement toutes les modales existantes et évite les erreurs
+    document.addEventListener("DOMContentLoaded", () => {
+      // récupère toutes les modales courantes (classe .modal + modales isolées par id)
+      const nodeList = [
+        ...document.querySelectorAll('.modal'), // la plupart de tes modales ont cette classe
+        document.getElementById('edit-modal'),
+        document.getElementById('mark-view-modal'),
+        document.getElementById('confirmModal'),
+        document.getElementById('detail-view'),
+        document.getElementById('add-choice-modal'),
+        document.getElementById('add-simple-modal'),
+        document.getElementById('add-complete-modal')
+      ].filter(Boolean); // supprime les null
+
+      // clic en dehors (fermeture si e.target === modal)
+      nodeList.forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) modal.classList.add('hidden');
+        });
+      });
+
+      // Escape : ferme toutes les modales ouvertes
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          nodeList.forEach(m => { if (m && !m.classList.contains('hidden')) m.classList.add('hidden'); });
+        }
+      });
+    });
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // --- Mode Ajout Simple ---
+      const etatSimple = document.getElementById("simple-list");
+      const noteGroupSimple = document.getElementById("simple-note");
+      const statutGroupSimple = document.getElementById("simple-completion");
+
+      function toggleFieldsSimple() {
+        if (etatSimple.value === "watched") {  // "watched" dans ton select
+          noteGroupSimple.classList.remove("hidden");
+          statutGroupSimple.classList.remove("hidden");
+        } else {
+          noteGroupSimple.classList.add("hidden");
+          statutGroupSimple.classList.add("hidden");
+        }
+      }
+
+
+      etatSimple.addEventListener("change", toggleFieldsSimple);
+      toggleFieldsSimple(); // Vérifie au chargement
+
+      // --- Mode Ajout Complet ---
+      const completeStatus = document.getElementById("complete-status");
+      const completeCompletion = document.getElementById("complete-completion");
+      const completeCompletionLabel = completeCompletion ? completeCompletion.previousElementSibling : null;
+
+      function updateCompleteCompletionVisibility() {
+        if (completeStatus.value === "vu") {
+          if (completeCompletion) completeCompletion.style.display = "";
+          if (completeCompletionLabel) completeCompletionLabel.style.display = "";
+        } else {
+          if (completeCompletion) completeCompletion.style.display = "none";
+          if (completeCompletionLabel) completeCompletionLabel.style.display = "none";
+        }
+      }
+
+      if (completeStatus) {
+        completeStatus.addEventListener("change", updateCompleteCompletionVisibility);
+        updateCompleteCompletionVisibility(); // Vérifie au chargement
+      }
+      // --- Mode Ajout Complet ---
+      const etatComplet = document.getElementById("complete-status");
+      const noteGroupComplet = document.getElementById("complete-note");
+      const statutGroupComplet = document.getElementById("complete-completion");
+
+      function toggleFieldsComplet() {
+        if (etatComplet.value === "vu") {
+          noteGroupComplet.classList.remove("hidden");
+          statutGroupComplet.classList.remove("hidden");
+        } else {
+          noteGroupComplet.classList.add("hidden");
+          statutGroupComplet.classList.add("hidden");
+        }
+      }
+
+      etatComplet.addEventListener("change", toggleFieldsComplet);
+      toggleFieldsComplet(); // Vérifie au chargement
+    });
+
+
+    function customConfirm(animeName) {
+      return new Promise((resolve) => {
+        const modal = document.getElementById("confirmModal");
+        const msg = document.getElementById("confirmMessage");
+        const yesBtn = document.getElementById("confirmYes");
+        const noBtn = document.getElementById("confirmNo");
+
+        // Texte dynamique avec le nom de l'animé
+        msg.textContent = `Es-tu sûr de vouloir supprimer "${animeName}" ?`;
+
+        modal.classList.remove('hidden');
+
+        const cleanup = () => {
+          modal.classList.add('hidden');
+          yesBtn.removeEventListener("click", onYes);
+          noBtn.removeEventListener("click", onNo);
+        };
+
+        const onYes = () => { cleanup(); resolve(true); };
+        const onNo = () => { cleanup(); resolve(false); };
+
+        yesBtn.addEventListener("click", onYes);
+        noBtn.addEventListener("click", onNo);
+      });
+    }
+
+
+    const exportBtn = document.getElementById("export-btn");
+    const importBtn = document.getElementById("import-btn");
+    const importInput = document.getElementById("import-input");
+
+    exportBtn.addEventListener("click", ()=>{
+      const data = { animes, catalogue };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "anime-list.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    importBtn.addEventListener("click", ()=> importInput.click());
+
+    importInput.addEventListener("change", (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{
+          const data = JSON.parse(reader.result);
+          if(data.animes) animes = data.animes;
+          if(data.catalogue) catalogue = data.catalogue;
+          saveDebounced();
+          render();
+          renderCatalogue();
+          alert("✅ Liste importée !");
+        }catch(err){ alert("❌ Erreur de lecture du fichier"); }
+      };
+      reader.readAsText(file);
+    });
+
+
+    const catalogueSearch = document.getElementById("catalogue-search");
+    const openAddModalBtn = document.getElementById("open-add-modal");
+    const addChoiceModal = document.getElementById("add-choice-modal");
+    const addSimpleModal = document.getElementById("add-simple-modal");
+    const cancelAddChoice = document.getElementById("cancel-add-choice");
+    const simpleAddBtn = document.getElementById("simple-add-btn");
+    const completeAddBtn = document.getElementById("complete-add-btn");
+    const closeSimpleAdd = document.getElementById("close-simple-add");
+    const simpleAddForm = document.getElementById("simple-add-form");
+
+    // Ouverture modale choix d'ajout
+    openAddModalBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      addChoiceModal.classList.remove('hidden');
+    });
+
+    // Fermeture modale choix
+    cancelAddChoice.addEventListener('click', () => {
+      addChoiceModal.classList.add('hidden');
+    });
+
+    // Ouverture modale simple
+    simpleAddBtn.addEventListener('click', () => {
+      addChoiceModal.classList.add('hidden');
+      addSimpleModal.classList.remove('hidden');
+    });
+
+    // Fermeture modale simple
+    closeSimpleAdd.addEventListener('click', () => {
+      addSimpleModal.classList.add('hidden');
+    });
+
+    // Soumission formulaire simple (corrigé)
+    simpleAddForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const title = document.getElementById("simple-title").value.trim();
+      const image = document.getElementById("simple-image").value.trim();
+      const note  = document.getElementById("simple-note").value;
+      const list  = document.getElementById("simple-list").value;
+      const completion = document.getElementById("simple-completion").value;
+
+      if (!title) return;
+      let status;
+      if (list === "towatch") status = "a_regarder";
+      if (list === "watched") status = "vu";
+      
+      // note seulement si vu
+      const parsedNote = parseFloat(note);
+      const noteValue = (status === "vu" && !isNaN(parsedNote)) ? parsedNote : null;
+
+      const anime = {
+        id: Date.now(),
+        name: title,
+        image: image || null,
+        note: noteValue,
+        status,                 // ✅ clé correcte
+        completion: (status ==="vu") ? completion: null,
+        tags: [],
+        description: "",
+        episodes: null,
+        films: false
+      };
+
+      animes.push(anime);
+      saveDebounced();          // ✅ fonction qui existe
+      render();
+
+      // ➕ Ajouter aussi dans le catalogue automatiquement
+      if (!catalogue.some(a => isSameName(a.name, anime.name))) {
+        catalogue.push({ name: anime.name, image: anime.image || null });
+        renderCatalogue();
+      }
+
+      addSimpleModal.classList.add("hidden");
+      simpleAddForm.reset();
+    });
+
+    // Récupération des éléments de la modale "Ajout Complet"
+    const addCompleteModal = document.getElementById("add-complete-modal");
+    const closeCompleteAdd = document.getElementById("close-complete-add");
+    const completeAddForm = document.getElementById("complete-add-form");
+
+    // Ouverture modale complète
+    completeAddBtn.addEventListener("click", () => {
+      addChoiceModal.classList.add("hidden");
+      addCompleteModal.classList.remove("hidden");
+    });
+
+    // Fermeture modale complète
+    closeCompleteAdd.addEventListener("click", () => {
+      addCompleteModal.classList.add("hidden");
+    });
+
+    // Soumission formulaire complet
+    completeAddForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const title = document.getElementById("complete-title").value.trim();
+      const image = document.getElementById("complete-image").value.trim();
+      const note  = parseFloat(document.getElementById("complete-note").value);
+      const status = document.getElementById("complete-status").value;
+      const completion = document.getElementById("complete-completion").value || null;
+      const tags = document.getElementById("complete-tags").value.split(",").map(t => t.trim()).filter(t => t);
+      const episodes = document.getElementById("complete-episodes").value ? parseInt(document.getElementById("complete-episodes").value, 10) : null;
+      const description = document.getElementById("complete-description").value.trim();
+      const films = document.getElementById("complete-films").value === "true";
+
+      if (!title) return;
+
+      const language = document.getElementById("complete-language").value;
+
+      // création de l'objet anime
+      const anime = {
+        id: Date.now(),
+        name: title,
+        image: image || null,
+        note: (!isNaN(note) && note >= 0 && note <= 10) ? note : null,
+        status,
+        completion: (status === "vu") ? completion : null,
+        tags,
+        description,
+        episodes,
+        films,
+        language // ← ajoute cette ligne
+      };
+
+      animes.push(anime);
+      saveDebounced();
+      render();
+
+      // Ajouter au catalogue automatiquement
+      if (!catalogue.some(a => isSameName(a.name, anime.name))) {
+        catalogue.push({ name: anime.name, image: anime.image || null });
+        renderCatalogue();
+      }
+
+      addCompleteModal.classList.add("hidden");
+      completeAddForm.reset();
+    });
+
+
+    const editDescription = document.getElementById('edit-description');
+    const editTags = document.getElementById('edit-tags');
+    const editEpisodes = document.getElementById('edit-episodes');
+    const editFilms = document.getElementById('edit-films');
+    const form = document.getElementById('anime-form');
+    const aRegarderList = document.getElementById('a_regarder-list');
+    const vuList = document.getElementById('vu-list');
+    const searchInput = document.getElementById('search');
+    const sortSelect = document.getElementById('sort');
+    const filterBtn = document.getElementById('filter-btn');
+    const aRegarderCol = document.getElementById('a-regarder-col');
+    const vuCol = document.getElementById('vu-col');
+    const catalogueBtn = document.getElementById('catalogue-btn');
+    const mainView = document.getElementById('main-view');
+    const catalogueView = document.getElementById('catalogue-view');
+    const catalogueForm = document.getElementById('catalogue-form');
+    const catalogueName = document.getElementById('catalogue-name');
+    const catalogueImage = document.getElementById('catalogue-image');
+    const catalogueList = document.getElementById('catalogue-list');
+    const aRegarderTitle = document.getElementById('a-regarder-title');
+    const vuTitle = document.getElementById('vu-title');
+
+    const editModal = document.getElementById('edit-modal');
+    const editForm = document.getElementById('edit-form');
+    const editName = document.getElementById('edit-name');
+    const editImage = document.getElementById('edit-image');
+    const editNote = document.getElementById('edit-note');
+    const editStatus = document.getElementById('edit-status');
+    const editCompletion = document.getElementById('edit-completion');
+    const cancelEditBtn = document.getElementById('cancel-edit');
+    let animeBeingEdited = null;
+
+    const detailView = document.getElementById('detail-view'); // ✅
+    const detailContent = document.getElementById('detail-content'); // ✅
+    const backBtn = document.getElementById('back-btn'); // ✅
+
+    const editLanguage = document.getElementById('edit-language');
+   
+    let filterEnAttente = false;
+    let catalogueMode = false;
+
+    let saveTimeout;
+    let animes = [];
+    let catalogue = [];
+
+    // Lecture compressée
+    try {
+      const savedAnimes = localStorage.getItem("animes");
+      const savedCatalogue = localStorage.getItem("catalogue");
+
+      if (savedAnimes) {
+        const decompressed = LZString.decompress(savedAnimes);
+        animes = decompressed ? JSON.parse(decompressed) : [];
+      }
+      if (savedCatalogue) {
+        const decompressed = LZString.decompress(savedCatalogue);
+        catalogue = decompressed ? JSON.parse(decompressed) : [];
+      }
+    } catch (e) {
+      console.error("Erreur chargement données :", e);
+      animes = [];
+      catalogue = [];
+    }
+
+    function saveDebounced(){
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(()=>{
+        localStorage.setItem('animes', LZString.compress(JSON.stringify(animes)));
+        localStorage.setItem('catalogue', LZString.compress(JSON.stringify(catalogue)));
+      }, 300);
+    }
+
+    function isSameName(a,b){
+      return a.localeCompare(b, "fr", { sensitivity:"base", ignorePunctuation:true })===0;
+    }
+
+    function truncateTitle(name, completionText){
+      const maxLength = 30;
+      if(name.length > maxLength){
+        return name.substring(0, maxLength-3) + '...' + completionText;
+      }
+      return name + completionText;
+    }
+
+    function createButton(text, handler){
+      const btn = document.createElement('button');
+      btn.type = "button";
+      btn.textContent = text;
+      btn.onclick = handler;
+      return btn;
+    }
+
+    function openEditModal(anime) {
+      animeBeingEdited = anime;
+      editName.value = anime.name;
+      editImage.value = anime.image || '';
+      editNote.value = anime.note != null ? anime.note : '';
+      editStatus.value = anime.status;
+      editCompletion.value = anime.completion || '';
+      editModal.classList.remove('hidden');
+      editDescription.value = anime.description || '';
+      editTags.value = anime.tags ? anime.tags.join(", ") : '';
+      editEpisodes.value = anime.episodes != null ? anime.episodes : '';
+      editFilms.value = anime.films ? "true" : "false";
+      editLanguage.value = anime.language || "VF";
+    }
+
+    function closeEditModal() {
+      animeBeingEdited = null;
+      editModal.classList.add('hidden');
+    }
+
+    editForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!animeBeingEdited) return;
+      animeBeingEdited.description = editDescription.value.trim();
+      animeBeingEdited.tags = editTags.value.split(",").map(t => t.trim()).filter(t => t);
+      animeBeingEdited.episodes = editEpisodes.value ? parseInt(editEpisodes.value, 10) : null;
+      animeBeingEdited.films = (editFilms.value === "true");
+      animeBeingEdited.name = editName.value.trim();
+      animeBeingEdited.image = editImage.value.trim() || null;
+      const noteValue = parseFloat(editNote.value);
+      animeBeingEdited.note = (!isNaN(noteValue) && noteValue >= 0 && noteValue <= 10) ? noteValue : null;
+      animeBeingEdited.status = editStatus.value;
+      animeBeingEdited.completion = editCompletion.value || null;
+      animeBeingEdited.language = editLanguage.value;
+      saveDebounced();
+
+      // Vérifie si la vue détaillée est ouverte
+      if (!detailView.classList.contains('hidden')) {
+        renderDetail(animeBeingEdited); // met à jour immédiatement la vue détaillée
+      } else {
+        render(); // sinon met à jour la vue principale
+      }
+
+      closeEditModal();
+
+    });
+    cancelEditBtn.addEventListener('click', closeEditModal);
+
+    function renderDetail(anime) {
+      mainView.classList.add('hidden');
+      catalogueView.classList.add('hidden');
+      detailView.classList.remove('hidden');
+
+      detailContent.innerHTML = '';
+
+      const container = document.createElement('div');
+      container.style.display = "flex";
+      container.style.gap = "20px";
+      container.style.flexWrap = "wrap";
+      container.style.alignItems = "flex-start";
+
+      if (anime.image) {
+        const img = document.createElement('img');
+        img.src = anime.image;
+        img.alt = "Affiche " + anime.name;
+        img.className = "anime-img";
+        img.loading = "lazy";
+        img.style.width = "220px";
+        img.style.height = "320px";
+        container.appendChild(img);
+      }
+
+      const info = document.createElement('div');
+      info.style.flex = "1";
+
+      const title = document.createElement('h2');
+      title.textContent = anime.name;
+      info.appendChild(title);
+
+      if (anime.note != null) {
+        const note = document.createElement('p');
+        note.textContent = "⭐ Note : " + anime.note + "/10";
+        info.appendChild(note);
+      }
+
+      const desc = document.createElement('p');
+      desc.textContent = anime.description || "Pas de description disponible.";
+      info.appendChild(desc);
+
+      const tags = document.createElement('p');
+      tags.textContent = "Genres : " + (anime.tags ? anime.tags.join(", ") : "Non renseigné");
+      info.appendChild(tags);
+
+      const eps = document.createElement('p');
+      eps.textContent = "Épisodes : " + (anime.episodes || "Inconnu");
+      info.appendChild(eps);
+
+      const films = document.createElement('p');
+      films.textContent = "Films : " + (anime.films ? "Oui" : "Non");
+      info.appendChild(films);
+
+      if(anime.language){
+        const lang = document.createElement('p');
+        lang.textContent = "🗣 Langue : " + anime.language;
+        info.appendChild(lang);
+      }
+
+
+      // --- Actions : Éditer et Supprimer ---
+      const actions = document.createElement('div');
+      actions.style.display = "flex";
+      actions.style.gap = "10px";
+      actions.style.marginTop = "10px";
+
+      const editBtn = createButton('✏️ Éditer', () => {
+        openEditModal(anime);
+      });
+
+      const deleteBtn = createButton('❌ Supprimer', () => {
+        customConfirm(anime.name).then(ok => {
+          if (ok) {
+            const index = animes.indexOf(anime);
+            if (index > -1) animes.splice(index, 1);
+            saveDebounced();
+            detailView.classList.add('hidden'); 
+            mainView.classList.remove('hidden'); // ← Affiche le menu principal après suppression
+            render();
+          }
+        });
+      });
+
+
+      actions.append(editBtn, deleteBtn);
+      info.appendChild(actions);
+
+      container.appendChild(info);
+      detailContent.appendChild(container);
+    }
+
+
+    backBtn.addEventListener('click', ()=>{ // ✅
+      detailView.classList.add('hidden');
+      render();
+      mainView.classList.remove('hidden');
+    });
+    
+    const markViewModal = document.getElementById('mark-view-modal');
+    const markViewForm = document.getElementById('mark-view-form');
+    const markNote = document.getElementById('mark-note');
+    const markCompletion = document.getElementById('mark-completion');
+    const cancelMarkView = document.getElementById('cancel-mark-view');
+    let animeToMark = null;
+
+    function openMarkViewModal(anime){
+      animeToMark = anime;
+      markNote.value = anime.note || "";
+      markCompletion.value = anime.completion || "fini";
+      markViewModal.classList.remove('hidden');
+    }
+
+    function closeMarkViewModal(){
+      animeToMark = null;
+      markViewModal.classList.add('hidden');
+    }
+
+    markViewForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      if(!animeToMark) return;
+      animeToMark.status = "vu";
+      const noteValue = parseFloat(markNote.value);
+      animeToMark.note = (!isNaN(noteValue) && noteValue >= 0 && noteValue <= 10) ? noteValue : null;
+      animeToMark.completion = markCompletion.value;
+      saveDebounced();
+      render();
+      closeMarkViewModal();
+    });
+
+    cancelMarkView.addEventListener('click', closeMarkViewModal);
+
+    function renderStats(){
+      const statsDiv = document.getElementById("stats");
+      const total = animes.length;
+      const vus = animes.filter(a=>a.status==="vu").length;
+      const aRegarder = animes.filter(a=>a.status==="a_regarder").length;
+
+      // ✅ seulement les épisodes des animés vus
+      const episodes = animes
+        .filter(a => a.status === "vu")
+        .reduce((sum,a)=> sum+(a.episodes||0),0);
+
+      const temps = Math.round(episodes * 24 / 60); // heures (24 min par ep)
+
+      statsDiv.textContent = `📊 Total: ${total} | Vu: ${vus} | À regarder: ${aRegarder} | Épisodes vus: ${episodes} (~${temps}h)`;
+    }
+
+
+    function render(){
+      
+      aRegarderList.innerHTML = '';
+      vuList.innerHTML = '';
+
+      const searchText = searchInput.value.toLowerCase();
+      let filtered = [...animes];
+
+      if (sortSelect.value === "alpha") filtered.sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
+      else if (sortSelect.value === "reverse") filtered.sort((a,b)=>b.name.localeCompare(a.name,"fr",{sensitivity:"base"}));
+      else if (sortSelect.value === "noteAsc") filtered.sort((a,b)=>(a.note||0)-(b.note||0));
+      else if (sortSelect.value === "noteDesc") filtered.sort((a,b)=>(b.note||0)-(a.note||0));
+
+      filtered = filtered.filter(anime=>anime.name.toLowerCase().includes(searchText));
+
+      if(filterEnAttente){
+        filtered = filtered.filter(anime=>anime.status==='vu' && anime.completion==='en_cours');
+        aRegarderCol.classList.add('hidden'); vuCol.classList.add('full-width');
+      }else{
+        aRegarderCol.classList.remove('hidden'); vuCol.classList.remove('full-width');
+      }
+
+      let countRegarder = 0;
+      let countVu = 0;
+
+      filtered.forEach(anime=>{
+        const li = document.createElement('li');
+        li.dataset.id = anime.id;
+
+        if(anime.image){
+          const img=document.createElement('img');
+          img.src=anime.image; img.alt="Affiche "+anime.name; img.className="anime-img";
+          img.onerror = () => img.src = 'https://via.placeholder.com/120x170?text=No+Image';
+          img.onclick = ()=>renderDetail(anime);
+          img.loading = "lazy";
+          li.appendChild(img);
+        }
+
+        const info=document.createElement('div'); info.className="anime-info";
+        const title=document.createElement('div'); title.className="anime-title";
+        let completionText="";
+        if(anime.status==="vu" && anime.completion){ completionText = anime.completion==="fini" ? " (Fini)" : " (En attente)"; }
+        title.textContent = truncateTitle(anime.name, completionText);
+        title.onclick = ()=>renderDetail(anime);
+        info.appendChild(title);
+        if(anime.note!=null && anime.note!==''){ const note=document.createElement('div'); note.className="anime-note"; note.textContent="⭐ Note : "+anime.note+"/10"; info.appendChild(note); }
+        if(anime.tags && anime.tags.length > 0){
+          const tags=document.createElement('div');
+          tags.className="anime-tags";
+
+          let text = "🎭 Genres : " + anime.tags.join(", ");
+          if (text.length > 40) {
+            text = text.substring(0, 40) + "...";
+          }
+
+          tags.textContent = text;
+          info.appendChild(tags);
+          // --- Nouveau : langue ---
+        if(anime.language){
+          const langDiv = document.createElement('div');
+          langDiv.className = "anime-language";
+          langDiv.textContent = "🗣 Langue : " + anime.language;
+          info.appendChild(langDiv);
+        }
+        }
+        li.appendChild(info);
+
+        const actions=document.createElement('div'); actions.className='actions';
+
+        const toggleBtn=createButton(
+          anime.status==='vu' ? '↩️ À regarder' : '✅ Marquer vu',
+          ()=>{
+            if(anime.status==='vu'){
+              anime.status='a_regarder';
+              anime.completion=null;
+              anime.note=null;
+              saveDebounced();
+              render();
+            }else{
+              // ✅ Ouvrir la modale "Marquer vu"
+              openMarkViewModal(anime);
+            }
+          }
+        );
+
+
+        const editBtn=createButton('✏️ Éditer', ()=>{ openEditModal(anime); });
+
+        const deleteBtn = createButton('❌ Supprimer', () => {
+            customConfirm(anime.name)
+              .then((ok) => {
+                if (ok) {
+                  const index = animes.indexOf(anime);
+                  if (index > -1) animes.splice(index, 1);
+                  saveDebounced();
+                  render();
+                }
+              });
+        });
+
+
+        actions.append(toggleBtn,editBtn,deleteBtn);
+        li.appendChild(actions);
+
+        if(anime.status==='a_regarder'){ aRegarderList.appendChild(li); countRegarder++; }
+        else { vuList.appendChild(li); countVu++; }
+      });
+
+      aRegarderTitle.textContent = `📌 À regarder (${countRegarder})`;
+      vuTitle.textContent = `✅ Vu (${countVu})`;
+      renderStats();  
+    }
+
+    // Assure-toi d'avoir : const catalogueSearch = document.getElementById("catalogue-search");
+    // et const catalogueList = document.getElementById('catalogue-list');
+
+    function renderCatalogue(){
+      catalogueList.innerHTML = '';
+
+      // sécurité si l'élément n'existe pas encore
+      const searchText = (catalogueSearch && catalogueSearch.value ? catalogueSearch.value.toLowerCase() : '');
+
+      const sorted = [...catalogue].sort((a,b) =>
+        a.name.localeCompare(b.name, "fr", { sensitivity: "base" })
+      );
+
+      sorted
+        .filter(item => item.name.toLowerCase().includes(searchText))
+        .forEach(anime => {
+          const li = document.createElement('li');
+
+          // Image (si fournie)
+          if (anime.image) {
+            const img = document.createElement('img');
+            img.src = anime.image;
+            img.alt = "Affiche " + anime.name;
+            img.className = "anime-img";
+            img.loading = "lazy"; // lazy loading
+            img.onerror = () => img.src = 'https://via.placeholder.com/120x170?text=No+Image';
+            li.appendChild(img);
+          }
+
+          // Titre
+          const title = document.createElement('div');
+          title.className = "anime-title";
+          title.textContent = anime.name.length > 35 ? anime.name.substring(0,32) + "..." : anime.name;
+          li.appendChild(title);
+
+          const addBtn = createButton('➕ Ajouter à ma liste', () => {
+            if (animes.some(a => isSameName(a.name, anime.name))) {
+              showMessage(`⚠️ "${anime.name}" est déjà dans ta liste`, "error");
+              return;
+            }
+
+            // Pré-remplit la modale "Ajout Complet"
+            document.getElementById("complete-title").value = anime.name;
+            document.getElementById("complete-image").value = anime.image || "";
+
+            document.getElementById("complete-status").value = "a_regarder";
+            document.getElementById("complete-completion").value = "";
+            document.getElementById("complete-tags").value = "";
+            document.getElementById("complete-episodes").value = "";
+            document.getElementById("complete-description").value = "";
+            document.getElementById("complete-films").value = "false";
+            document.getElementById("complete-language").value = "VF";
+            document.getElementById("complete-note").value = "";
+
+            // ✅ Ouvre la modale
+            const modal = document.getElementById("add-complete-modal");
+            if (modal) {
+              modal.classList.remove("hidden");
+            } else {
+              console.error("⚠️ Impossible de trouver la modale 'add-complete-modal'");
+            }
+          });
+
+
+          const deleteBtn = createButton('❌ Supprimer', () => {
+            customConfirm(anime.name)
+              .then((ok) => {
+                if (ok) {
+                  const index = catalogue.indexOf(anime);
+                  if (index > -1) catalogue.splice(index, 1);
+                  saveDebounced();
+                  renderCatalogue();
+                }
+              });
+          });
+
+
+
+          li.append(addBtn, deleteBtn);
+          catalogueList.appendChild(li);
+        });
+    }
+
+    // écouteur recherche
+    if (catalogueSearch) catalogueSearch.addEventListener("input", renderCatalogue);
+
+
+    catalogueForm.addEventListener('submit',e=>{
+      e.preventDefault();
+      const newEntry={
+        name: catalogueName.value.trim(),
+        image: catalogueImage.value.trim()||null
+      };
+      if(!newEntry.name) return;
+      if(!catalogue.some(a=>isSameName(a.name,newEntry.name) || (a.image && newEntry.image && a.image===newEntry.image))){
+        catalogue.push(newEntry);
+      }
+      catalogueName.value=catalogueImage.value='';
+      saveDebounced(); renderCatalogue();
+    });
+
+    searchInput.addEventListener('input',render);
+    sortSelect.addEventListener('change',render);
+    filterBtn.addEventListener('click',()=>{ filterEnAttente=!filterEnAttente; filterBtn.classList.toggle('active-filter',filterEnAttente); render(); });
+    catalogueBtn.addEventListener('click',()=>{
+      catalogueMode=!catalogueMode;
+      if(catalogueMode){
+        mainView.classList.add('hidden');
+        catalogueView.classList.remove('hidden');
+        renderCatalogue();
+      }else{
+        mainView.classList.remove('hidden');
+        catalogueView.classList.add('hidden');
+        render();
+      }
+    });
+
+    /* ✅ Masquage automatique du champ "Statut (Si Vu)" dans l’ajout simple */
+    const simpleList = document.getElementById("simple-list");
+    const simpleCompletion = document.getElementById("simple-completion");
+    const simpleCompletionLabel = simpleCompletion ? simpleCompletion.previousElementSibling : null;
+    function updateSimpleCompletionVisibility() {
+      if (simpleList && simpleList.value === "watched") {
+        if (simpleCompletion) simpleCompletion.style.display = "";
+        if (simpleCompletionLabel) simpleCompletionLabel.style.display = "";
+      } else {
+        if (simpleCompletion) simpleCompletion.style.display = "none";
+        if (simpleCompletionLabel) simpleCompletionLabel.style.display = "none";
+      }
+    }
+    if (simpleList) {
+      simpleList.addEventListener("change", updateSimpleCompletionVisibility);
+      updateSimpleCompletionVisibility();
+    }
+
+    render();
+  </script>
+</body>
+</html>
