@@ -884,12 +884,16 @@
     let saveTimeout;
     let animes = [];
     let catalogue = [];
-    fetch("https://black-sharrk.github.io/MyAnimeList-Site/catalogue.json")
+
+    // 🔽 Charge le catalogue commun depuis ton GitHub
+    fetch("https://Black-Sharrk.github.io/MyAnimeList-Site/catalogue.json")
       .then(r => r.json())
       .then(data => {
         catalogue = data;
-        renderCatalogue();
-      });
+        renderCatalogue(); // met à jour l’affichage
+      })
+      .catch(err => console.error("Erreur de chargement du catalogue :", err));
+
 
 
     // Lecture compressée
@@ -1387,6 +1391,7 @@
   </script>
 </body>
 </html>
+
 
 
 
