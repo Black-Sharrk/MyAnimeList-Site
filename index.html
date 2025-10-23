@@ -885,15 +885,19 @@
     let animes = [];
     let catalogue = [];
 
-    // 🔽 Charge le catalogue commun depuis ton GitHub
-    fetch("https://Black-Sharrk.github.io/MyAnimeList-Site/catalogue.json")
-      .then(r => r.json())
-      .then(data => {
-        catalogue = data;
-        renderCatalogue(); // met à jour l’affichage
-      })
-      .catch(err => console.error("Erreur de chargement du catalogue :", err));
+    import { ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import { getDatabase } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
+    const db = getDatabase();
+
+    // 🔽 Lire le catalogue partagé depuis Firebase
+    onValue(ref(db, "catalogue"), (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        catalogue = Object.values(data);
+        renderCatalogue(); // Met à jour ton affichage
+      }
+    });
 
 
     // Lecture compressée
@@ -1409,6 +1413,7 @@
   </script>
 </body>
 </html>
+
 
 
 
