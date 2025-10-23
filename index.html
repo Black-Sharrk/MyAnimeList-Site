@@ -552,8 +552,7 @@
 
         if (!title) return;
 
-        // ✅ Ajout uniquement dans le catalogue
-        catalogue.push({
+        const anime = {
           name: title,
           image: image || null,
           tags,
@@ -561,11 +560,22 @@
           description,
           films,
           language
-        });
-		
+        };
 
-        saveDebounced();
-        renderCatalogue();
+        // ✅ Envoi sur Firebase (catalogue partagé)
+        set(push(ref(db, "catalogue")), anime)
+          .then(() => {
+            showMessage(`✅ "${title}" ajouté au catalogue partagé !`, "success");
+            addCatalogueModal.classList.add("hidden");
+            catalogueAddForm.reset();
+          })
+          .catch((err) => {
+            console.error("❌ Erreur Firebase :", err);
+            showMessage("Erreur lors de l’ajout dans Firebase", "error");
+          });
+      });
+    }
+
         addCatalogueModal.classList.add("hidden");
         catalogueAddForm.reset();
 
@@ -1427,29 +1437,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
