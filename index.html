@@ -573,14 +573,14 @@
             console.error("❌ Erreur Firebase :", err);
             showMessage("Erreur lors de l’ajout dans Firebase", "error");
           });
-      });
+      
     
 
         addCatalogueModal.classList.add("hidden");
         catalogueAddForm.reset();
 
         showMessage(`✅ "${title}" ajouté au catalogue !`, "success");
-      };
+      });
     }
 
 
@@ -1437,4 +1437,5 @@
   </script>
 </body>
 </html>
+
 
