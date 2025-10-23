@@ -502,6 +502,7 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
+	const db = getDatabase(app);
 
 	// --- 4. Exemple : lire ton catalogue ---
     onValue(ref(db, "catalogue"), (snapshot) => {
@@ -1449,6 +1450,7 @@
   </script>
 </body>
 </html>
+
 
 
 
