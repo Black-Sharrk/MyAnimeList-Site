@@ -503,6 +503,23 @@
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
 
+	// --- 4. Exemple : lire ton catalogue ---
+    let catalogue = [];
+    onValue(ref(db, "catalogue"), (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        catalogue = Object.values(data);
+        console.log("Catalogue chargé :", catalogue);
+        // renderCatalogue();   // <- décommente si ta fonction existe
+      }
+    });
+
+    // --- 5. Exemple : ajouter un animé ---
+    function ajouterAnimeFirebase(anime) {
+      set(push(ref(db, "catalogue")), anime)
+        .then(() => console.log("✅ Ajouté sur Firebase"))
+        .catch((err) => console.error("❌ Erreur Firebase :", err));
+    }
 
 
 	  
@@ -1435,6 +1452,7 @@
   </script>
 </body>
 </html>
+
 
 
 
