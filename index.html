@@ -502,6 +502,7 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
+	const db = getDatabase();
 
 	// --- 4. Exemple : lire ton catalogue ---
     onValue(ref(db, "catalogue"), (snapshot) => {
@@ -568,7 +569,6 @@
         try {
           import("https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js").then(module => {
             const { getDatabase, ref, push, set } = module;
-            const db = getDatabase();
             set(push(ref(db, "catalogue")), {
               name: title,
               image: image || null,
@@ -1451,6 +1451,7 @@
   </script>
 </body>
 </html>
+
 
 
 
