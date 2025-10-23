@@ -477,7 +477,46 @@
       </form>
     </div>
   </div>
+  <script type="module">
+    // 🔧 Import cohérent (même version pour tous)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-analytics.js";
 
+    // ✅ Configuration Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCMya4cKDXY86zsFU6PAnx7C9ruQEi_FfU",
+      authDomain: "myanimelist-34b4a.firebaseapp.com",
+      projectId: "myanimelist-34b4a",
+      storageBucket: "myanimelist-34b4a.firebasestorage.app",
+      messagingSenderId: "68913551125",
+      appId: "1:68913551125:web:df3c6a221d66fc80d23b1c",
+      measurementId: "G-LF9S70X9F0",
+      databaseURL: "https://myanimelist-34b4a-default-rtdb.europe-west1.firebasedatabase.app/"  <!-- ⚠️ ajoute bien ceci -->
+    };
+
+    // ✅ Initialisation
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getDatabase(app); // <-- ne plante plus
+
+    // ✅ Exemple : lecture du catalogue
+    onValue(ref(db, "catalogue"), (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        catalogue = Object.values(data);
+        console.log("Catalogue chargé :", catalogue);
+        // renderCatalogue();
+      }
+    });
+
+    // ✅ Exemple : ajout d’un animé
+    function ajouterAnimeFirebase(anime) {
+      set(push(ref(db, "catalogue")), anime)
+        .then(() => console.log("✅ Ajouté sur Firebase"))
+        .catch((err) => console.error("❌ Erreur Firebase :", err));
+    }
+  </script>
 
 	
   <script type="module">
@@ -1433,6 +1472,7 @@
   </script>
 </body>
 </html>
+
 
 
 
