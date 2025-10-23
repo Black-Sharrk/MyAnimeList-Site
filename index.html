@@ -949,7 +949,6 @@
     import { ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
     import { getDatabase } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-    const db = getDatabase();
 
     // 🔽 Lire le catalogue partagé depuis Firebase
     onValue(ref(db, "catalogue"), (snapshot) => {
@@ -1451,6 +1450,7 @@
   </script>
 </body>
 </html>
+
 
 
 
