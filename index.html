@@ -504,7 +504,6 @@
     const analytics = getAnalytics(app);
 
 	// --- 4. Exemple : lire ton catalogue ---
-    let catalogue = [];
     onValue(ref(db, "catalogue"), (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -1452,6 +1451,7 @@
   </script>
 </body>
 </html>
+
 
 
 
