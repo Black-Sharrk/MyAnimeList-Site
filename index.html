@@ -567,7 +567,7 @@
         });
 		// 🔽 Envoie aussi vers Firebase
         try {
-          import("https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js").then(module => {
+          import("https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js").then(module => {
             const { getDatabase, ref, push, set } = module;
             set(push(ref(db, "catalogue")), {
               name: title,
@@ -1450,6 +1450,7 @@
   </script>
 </body>
 </html>
+
 
 
 
