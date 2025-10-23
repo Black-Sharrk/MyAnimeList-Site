@@ -522,6 +522,25 @@
           films,
           language
         });
+		// 🔽 Envoie aussi vers Firebase
+        try {
+          import("https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js").then(module => {
+            const { getDatabase, ref, push, set } = module;
+            const db = getDatabase();
+            set(push(ref(db, "catalogue")), {
+              name: title,
+              image: image || null,
+              tags,
+              episodes,
+              description,
+              films,
+              language
+            });
+         });
+          console.log("✅ Catalogue mis à jour sur Firebase !");
+        } catch (err) {
+          console.error("⚠️ Erreur lors de la mise à jour Firebase :", err);
+        }
 
         saveDebounced();
         renderCatalogue();
@@ -1413,6 +1432,7 @@
   </script>
 </body>
 </html>
+
 
 
 
