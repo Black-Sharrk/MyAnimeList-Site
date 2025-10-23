@@ -479,7 +479,7 @@
   </div>
   <script type="module">
     // 🔧 Import cohérent (même version pour tous)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-analytics.js";
 
@@ -496,7 +496,7 @@
     };
 
     // ✅ Initialisation
-    const app = initializeApp(firebaseConfig);
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const analytics = getAnalytics(app);
     const db = getDatabase(app); // <-- ne plante plus
 
@@ -1472,6 +1472,7 @@
   </script>
 </body>
 </html>
+
 
 
 
