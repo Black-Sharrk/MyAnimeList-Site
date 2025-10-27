@@ -501,13 +501,20 @@
     const db = getDatabase(app); // <-- ne plante plus
 
     // ✅ Exemple : lecture du catalogue
+    let catalogueByName = {};
     onValue(ref(db, "catalogue"), (snapshot) => {
       const data = snapshot.val();
+      catalogue = [];
+      catalogueByName = {};
       if (data) {
-        catalogue = Object.values(data);
-        console.log("Catalogue chargé :", catalogue);
-        // renderCatalogue();
+        Object.entries(data).forEach(([id, item]) => {
+          const entry = { id, ...item };
+          catalogue.push(entry);
+          catalogueByName[item.name.toLowerCase()] = entry;
+        });
       }
+      renderCatalogue();
+      render();
     });
 
     // ✅ Exemple : ajout d’un animé
@@ -1437,3 +1444,4 @@
   </script>
 </body>
 </html>
+
