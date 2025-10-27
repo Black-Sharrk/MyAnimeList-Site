@@ -526,8 +526,30 @@
         .then(() => console.log("✅ Ajouté sur Firebase"))
         .catch((err) => console.error("❌ Erreur Firebase :", err));
     }
+	// ✅ Mise à jour d’un animé dans Firebase
+    import { update, get, child } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
+    async function updateAnimeFirebase(name, updatedData) {
+      try {
+        const snapshot = await get(ref(db, "catalogue"));
+        if (!snapshot.exists()) return console.log("⚠️ Catalogue vide sur Firebase");
 
+        const data = snapshot.val();
+        const entry = Object.entries(data).find(
+          ([, anime]) => anime.name?.toLowerCase().trim() === name.toLowerCase().trim()
+        );
+
+        if (entry) {
+          const [key] = entry;
+          await update(ref(db, `catalogue/${key}`), updatedData);
+          console.log(`✅ Animé "${name}" mis à jour dans Firebase`);
+        } else {
+          console.log(`ℹ️ "${name}" non trouvé sur Firebase`);
+        }
+      } catch (err) {
+        console.error("❌ Erreur mise à jour Firebase :", err);
+      }
+    }
 
 	  
     const catalogueAddBtn = document.getElementById("catalogue-add-btn");
@@ -1057,6 +1079,18 @@
       animeBeingEdited.completion = editCompletion.value || null;
       animeBeingEdited.language = editLanguage.value;
       saveDebounced();
+	  // 🔄 Synchronisation avec Firebase
+      updateAnimeFirebase(animeBeingEdited.name, {
+        name: animeBeingEdited.name,
+        image: animeBeingEdited.image || null,
+        tags: animeBeingEdited.tags || [],
+        episodes: animeBeingEdited.episodes || null,
+        description: animeBeingEdited.description || "",
+        films: animeBeingEdited.films || false,
+        language: animeBeingEdited.language || "VF",
+        note: animeBeingEdited.note || null,
+        completion: animeBeingEdited.completion || null
+      });
 
       // Vérifie si la vue détaillée est ouverte
       if (!detailView.classList.contains('hidden')) {
@@ -1477,6 +1511,7 @@
   </script>
 </body>
 </html>
+
 
 
 
