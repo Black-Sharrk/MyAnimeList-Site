@@ -718,7 +718,7 @@
     const importInput = document.getElementById("import-input");
 
     exportBtn.addEventListener("click", ()=>{
-      const data = { animes, catalogue };
+      const data = { animes };
       const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -738,7 +738,7 @@
         try{
           const data = JSON.parse(reader.result);
           if(data.animes) animes = data.animes;
-          if(data.catalogue) catalogue = data.catalogue;
+          //if(data.catalogue) catalogue = data.catalogue;
           saveDebounced();
           render();
           renderCatalogue();
@@ -841,10 +841,10 @@
       render();
 
       // ➕ Ajouter aussi dans le catalogue automatiquement
-      if (!catalogue.some(a => isSameName(a.name, anime.name))) {
-        catalogue.push({ name: anime.name, image: anime.image || null });
-        renderCatalogue();
-      }
+      //if (!catalogue.some(a => isSameName(a.name, anime.name))) {
+        //catalogue.push({ name: anime.name, image: anime.image || null });
+        //renderCatalogue();
+      //}
 
       addSimpleModal.classList.add("hidden");
       simpleAddForm.reset();
@@ -904,10 +904,10 @@
       render();
 
       // Ajouter au catalogue automatiquement
-      if (!catalogue.some(a => isSameName(a.name, anime.name))) {
-        catalogue.push({ name: anime.name, image: anime.image || null });
-        renderCatalogue();
-      }
+      //if (!catalogue.some(a => isSameName(a.name, anime.name))) {
+        //catalogue.push({ name: anime.name, image: anime.image || null });
+        //renderCatalogue();
+      //}
 
       addCompleteModal.classList.add("hidden");
       completeAddForm.reset();
@@ -957,7 +957,7 @@
 
     let saveTimeout;
     let animes = [];
-    let catalogue = [];
+    //let catalogue = [];
 
 
     // 🔽 Lire le catalogue partagé depuis Firebase
@@ -981,14 +981,14 @@
     } catch (e) {
       console.error("Erreur chargement données :", e);
       animes = [];
-      catalogue = [];
+      //catalogue = [];
     }
 
     function saveDebounced(){
       clearTimeout(saveTimeout);
       saveTimeout = setTimeout(()=>{
         localStorage.setItem('animes', LZString.compress(JSON.stringify(animes)));
-        localStorage.setItem('catalogue', LZString.compress(JSON.stringify(catalogue)));
+        //localStorage.setItem('catalogue', LZString.compress(JSON.stringify(catalogue)));
       }, 300);
     }
 
@@ -1460,6 +1460,7 @@
   </script>
 </body>
 </html>
+
 
 
 
