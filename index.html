@@ -991,17 +991,6 @@
     let saveTimeout;
     let animes = [];
 
-
-    // 🔽 Lire le catalogue partagé depuis Firebase
-    onValue(ref(db, "catalogue"), (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        catalogue = Object.values(data);
-        renderCatalogue(); // Met à jour ton affichage
-      }
-    });
-
-
     // Lecture compressée
     try {
       const savedAnimes = localStorage.getItem("animes");
@@ -1067,6 +1056,9 @@
     editForm.addEventListener('submit', (e) => {
       e.preventDefault();
       if (!animeBeingEdited) return;
+	  
+	  const oldName = animeBeingEdited.name;
+	  
       animeBeingEdited.description = editDescription.value.trim();
       animeBeingEdited.tags = editTags.value.split(",").map(t => t.trim()).filter(t => t);
       animeBeingEdited.episodes = editEpisodes.value ? parseInt(editEpisodes.value, 10) : null;
@@ -1100,7 +1092,18 @@
       }
 
       closeEditModal();
-
+	  // 🔹 Mets à jour aussi Firebase
+      await updateAnimeFirebase(oldName, {
+        name: animeBeingEdited.name,
+        image: animeBeingEdited.image,
+        tags: animeBeingEdited.tags,
+        episodes: animeBeingEdited.episodes,
+        description: animeBeingEdited.description,
+        films: animeBeingEdited.films,
+        language: animeBeingEdited.language,
+        note: animeBeingEdited.note,
+        completion: animeBeingEdited.completion
+      });
     });
     cancelEditBtn.addEventListener('click', closeEditModal);
 
@@ -1501,3 +1504,4 @@
   </script>
 </body>
 </html>
+
