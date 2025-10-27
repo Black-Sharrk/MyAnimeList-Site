@@ -520,13 +520,12 @@
     });
 
 
-    // ✅ Exemple : ajout d’un animé
     function ajouterAnimeFirebase(anime) {
-      set(push(ref(db, "catalogue")), anime)
-        .then(() => console.log("✅ Ajouté sur Firebase"))
+      const newRef = push(ref(db, "catalogue"));
+      return set(newRef, anime)
+        .then(() => console.log("✅ Ajouté sur Firebase :", anime))
         .catch((err) => console.error("❌ Erreur Firebase :", err));
     }
-
 
 
 	  
@@ -969,15 +968,6 @@
     let animes = [];
     let catalogue = [];
 
-
-    // 🔽 Lire le catalogue partagé depuis Firebase
-    onValue(ref(db, "catalogue"), (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        catalogue = Object.values(data);
-        renderCatalogue(); // Met à jour ton affichage
-      }
-    });
 
 
     // Lecture compressée
@@ -1477,3 +1467,4 @@
   </script>
 </body>
 </html>
+
