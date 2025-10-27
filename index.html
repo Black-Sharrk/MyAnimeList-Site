@@ -487,12 +487,12 @@
     const firebaseConfig = {
       apiKey: "AIzaSyCMya4cKDXY86zsFU6PAnx7C9ruQEi_FfU",
       authDomain: "myanimelist-34b4a.firebaseapp.com",
-      databaseURL: "https://myanimelist-34b4a-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "myanimelist-34b4a",
       storageBucket: "myanimelist-34b4a.firebasestorage.app",
       messagingSenderId: "68913551125",
       appId: "1:68913551125:web:df3c6a221d66fc80d23b1c",
-      measurementId: "G-LF9S70X9F0"
+      measurementId: "G-LF9S70X9F0",
+      databaseURL: "https://myanimelist-34b4a-default-rtdb.europe-west1.firebasedatabase.app/"
     };
 
     // ✅ Initialisation
@@ -500,32 +500,23 @@
     const analytics = getAnalytics(app);
     const db = getDatabase(app); // <-- ne plante plus
 
-    // ✅ Lecture en direct du catalogue Firebase
+    // ✅ Exemple : lecture du catalogue
     onValue(ref(db, "catalogue"), (snapshot) => {
       const data = snapshot.val();
-
       if (data) {
         catalogue = Object.values(data);
-        console.log("✅ Catalogue Firebase chargé :", catalogue);
-      } else {
-        catalogue = [];
-        console.log("⚠️ Catalogue vide sur Firebase");
-      }
-
-      // 🔄 Met à jour automatiquement l’affichage quand les données changent
-      if (document.getElementById("catalogue-view") && 
-          !document.getElementById("catalogue-view").classList.contains("hidden")) {
-        renderCatalogue();
+        console.log("Catalogue chargé :", catalogue);
+        // renderCatalogue();
       }
     });
 
-
+    // ✅ Exemple : ajout d’un animé
     function ajouterAnimeFirebase(anime) {
-      const newRef = push(ref(db, "catalogue"));
-      return set(newRef, anime)
-        .then(() => console.log("✅ Ajouté sur Firebase :", anime))
+      set(push(ref(db, "catalogue")), anime)
+        .then(() => console.log("✅ Ajouté sur Firebase"))
         .catch((err) => console.error("❌ Erreur Firebase :", err));
     }
+
 
 
 	  
@@ -552,8 +543,7 @@
         e.preventDefault();
 
         const title = document.getElementById("catalogue-title").value.trim();
-        const rawImage = document.getElementById("catalogue-image").value.trim();
-        const image = rawImage.startsWith("data:image") ? null : rawImage; 
+        const image = document.getElementById("catalogue-image").value.trim();
         const tags = document.getElementById("catalogue-tags").value.split(",").map(t => t.trim()).filter(t => t);
         const episodes = document.getElementById("catalogue-episodes").value ? parseInt(document.getElementById("catalogue-episodes").value, 10) : null;
         const description = document.getElementById("catalogue-description").value.trim();
@@ -728,7 +718,7 @@
     const importInput = document.getElementById("import-input");
 
     exportBtn.addEventListener("click", ()=>{
-      const data = { animes };
+      const data = { animes, catalogue };
       const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -748,34 +738,11 @@
         try{
           const data = JSON.parse(reader.result);
           if(data.animes) animes = data.animes;
-          //if(data.catalogue) catalogue = data.catalogue;
+          if(data.catalogue) catalogue = data.catalogue;
           saveDebounced();
           render();
           renderCatalogue();
           alert("✅ Liste importée !");
-		  // 🔄 Synchronisation avec Firebase
-          if (Array.isArray(animes)) {
-            animes.forEach(anime => {
-              // Vérifie si l'anime est déjà dans le catalogue partagé
-              const existeDeja = catalogue.some(a =>
-                a.name?.toLowerCase().trim() === anime.name?.toLowerCase().trim()
-              );
-
-              if (!existeDeja && anime.name) {
-                const entry = {
-                  name: anime.name,
-                  image: anime.image || null,
-                  tags: anime.tags || [],
-                  episodes: anime.episodes || null,
-                  description: anime.description || "",
-                  films: anime.films || false,
-                  language: anime.language || "VF"
-                };
-                ajouterAnimeFirebase(entry);
-              }
-            });
-            console.log("✅ Synchronisation Firebase terminée.");
-          }
         }catch(err){ alert("❌ Erreur de lecture du fichier"); }
       };
       reader.readAsText(file);
@@ -819,8 +786,7 @@
       e.preventDefault();
 
       const title = document.getElementById("simple-title").value.trim();
-      const rawImage = document.getElementById("simple-image").value.trim();
-      const image = rawImage.startsWith("data:image") ? null : rawImage;
+      const image = document.getElementById("simple-image").value.trim();
       const note  = document.getElementById("simple-note").value;
       const list  = document.getElementById("simple-list").value;
       const completion = document.getElementById("simple-completion").value;
@@ -852,10 +818,10 @@
       render();
 
       // ➕ Ajouter aussi dans le catalogue automatiquement
-      //if (!catalogue.some(a => isSameName(a.name, anime.name))) {
-        //catalogue.push({ name: anime.name, image: anime.image || null });
-        //renderCatalogue();
-      //}
+      if (!catalogue.some(a => isSameName(a.name, anime.name))) {
+        catalogue.push({ name: anime.name, image: anime.image || null });
+        renderCatalogue();
+      }
 
       addSimpleModal.classList.add("hidden");
       simpleAddForm.reset();
@@ -882,8 +848,7 @@
       e.preventDefault();
 
       const title = document.getElementById("complete-title").value.trim();
-      const rawImage = document.getElementById("complete-image").value.trim();
-      const image = rawImage.startsWith("data:image") ? null : rawImage;
+      const image = document.getElementById("complete-image").value.trim();
       const note  = parseFloat(document.getElementById("complete-note").value);
       const status = document.getElementById("complete-status").value;
       const completion = document.getElementById("complete-completion").value || null;
@@ -916,10 +881,10 @@
       render();
 
       // Ajouter au catalogue automatiquement
-      //if (!catalogue.some(a => isSameName(a.name, anime.name))) {
-        //catalogue.push({ name: anime.name, image: anime.image || null });
-        //renderCatalogue();
-      //}
+      if (!catalogue.some(a => isSameName(a.name, anime.name))) {
+        catalogue.push({ name: anime.name, image: anime.image || null });
+        renderCatalogue();
+      }
 
       addCompleteModal.classList.add("hidden");
       completeAddForm.reset();
@@ -972,6 +937,15 @@
     let catalogue = [];
 
 
+    // 🔽 Lire le catalogue partagé depuis Firebase
+    onValue(ref(db, "catalogue"), (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        catalogue = Object.values(data);
+        renderCatalogue(); // Met à jour ton affichage
+      }
+    });
+
 
     // Lecture compressée
     try {
@@ -984,14 +958,14 @@
     } catch (e) {
       console.error("Erreur chargement données :", e);
       animes = [];
-      //catalogue = [];
+      catalogue = [];
     }
 
     function saveDebounced(){
       clearTimeout(saveTimeout);
       saveTimeout = setTimeout(()=>{
         localStorage.setItem('animes', LZString.compress(JSON.stringify(animes)));
-        //localStorage.setItem('catalogue', LZString.compress(JSON.stringify(catalogue)));
+        localStorage.setItem('catalogue', LZString.compress(JSON.stringify(catalogue)));
       }, 300);
     }
 
@@ -1243,7 +1217,7 @@
         if(anime.image){
           const img=document.createElement('img');
           img.src=anime.image; img.alt="Affiche "+anime.name; img.className="anime-img";
-          img.onerror = () => img.src = './no-image.png';
+          img.onerror = () => img.src = 'https://via.placeholder.com/120x170?text=No+Image';
           img.onclick = ()=>renderDetail(anime);
           img.loading = "lazy";
           li.appendChild(img);
@@ -1349,7 +1323,7 @@
             img.alt = "Affiche " + anime.name;
             img.className = "anime-img";
             img.loading = "lazy"; // lazy loading
-            img.onerror = () => img.src = './no-image.png';
+            img.onerror = () => img.src = 'https://via.placeholder.com/120x170?text=No+Image';
             li.appendChild(img);
           }
 
@@ -1429,19 +1403,12 @@
     sortSelect.addEventListener('change',render);
     filterBtn.addEventListener('click',()=>{ filterEnAttente=!filterEnAttente; filterBtn.classList.toggle('active-filter',filterEnAttente); render(); });
     catalogueBtn.addEventListener('click',()=>{
-      catalogueMode = !catalogueMode;
+      catalogueMode=!catalogueMode;
       if(catalogueMode){
         mainView.classList.add('hidden');
         catalogueView.classList.remove('hidden');
-
-        if (catalogue.length === 0) {
-          // 🔄 Si le catalogue Firebase n’est pas encore chargé
-          showMessage("⏳ Chargement du catalogue depuis Firebase...", "success");
-        } else {
-          renderCatalogue();
-        }
-
-      } else {
+        renderCatalogue();
+      }else{
         mainView.classList.remove('hidden');
         catalogueView.classList.add('hidden');
         render();
@@ -1470,7 +1437,3 @@
   </script>
 </body>
 </html>
-
-
-
-
