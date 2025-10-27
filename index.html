@@ -552,7 +552,8 @@
         e.preventDefault();
 
         const title = document.getElementById("catalogue-title").value.trim();
-        const image = document.getElementById("catalogue-image").value.trim();
+        const rawImage = document.getElementById("catalogue-image").value.trim();
+        const image = rawImage.startsWith("data:image") ? null : rawImage; 
         const tags = document.getElementById("catalogue-tags").value.split(",").map(t => t.trim()).filter(t => t);
         const episodes = document.getElementById("catalogue-episodes").value ? parseInt(document.getElementById("catalogue-episodes").value, 10) : null;
         const description = document.getElementById("catalogue-description").value.trim();
@@ -818,7 +819,8 @@
       e.preventDefault();
 
       const title = document.getElementById("simple-title").value.trim();
-      const image = document.getElementById("simple-image").value.trim();
+      const rawImage = document.getElementById("simple-image").value.trim();
+      const image = rawImage.startsWith("data:image") ? null : rawImage;
       const note  = document.getElementById("simple-note").value;
       const list  = document.getElementById("simple-list").value;
       const completion = document.getElementById("simple-completion").value;
@@ -880,7 +882,8 @@
       e.preventDefault();
 
       const title = document.getElementById("complete-title").value.trim();
-      const image = document.getElementById("complete-image").value.trim();
+      const rawImage = document.getElementById("complete-image").value.trim();
+      const image = rawImage.startsWith("data:image") ? null : rawImage;
       const note  = parseFloat(document.getElementById("complete-note").value);
       const status = document.getElementById("complete-status").value;
       const completion = document.getElementById("complete-completion").value || null;
@@ -1240,7 +1243,7 @@
         if(anime.image){
           const img=document.createElement('img');
           img.src=anime.image; img.alt="Affiche "+anime.name; img.className="anime-img";
-          img.onerror = () => img.src = 'https://via.placeholder.com/120x170?text=No+Image';
+          img.onerror = () => img.src = './no-image.png';
           img.onclick = ()=>renderDetail(anime);
           img.loading = "lazy";
           li.appendChild(img);
@@ -1346,7 +1349,7 @@
             img.alt = "Affiche " + anime.name;
             img.className = "anime-img";
             img.loading = "lazy"; // lazy loading
-            img.onerror = () => img.src = 'https://via.placeholder.com/120x170?text=No+Image';
+            img.onerror = () => img.src = './no-image.png';
             li.appendChild(img);
           }
 
@@ -1467,6 +1470,7 @@
   </script>
 </body>
 </html>
+
 
 
 
