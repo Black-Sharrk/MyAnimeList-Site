@@ -480,8 +480,8 @@
   <script type="module">
     // 🔧 Import cohérent (même version pour tous)
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getDatabase, ref, onValue, push, set, get, update } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
-    // import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-analytics.js";
+    import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-analytics.js";
 
     // ✅ Configuration Firebase
     const firebaseConfig = {
@@ -497,28 +497,25 @@
 
     // ✅ Initialisation
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    // const analytics = getAnalytics(app);
+    const analytics = getAnalytics(app);
     const db = getDatabase(app); // <-- ne plante plus
 
-    // ✅ Catalogue en mémoire (déclaré avant les handlers Firebase)
-    let catalogue = [];
-
-    // ✅ Lecture en direct du catalogue Firebase (remplacé par une version robuste)
+    // ✅ Lecture en direct du catalogue Firebase
     onValue(ref(db, "catalogue"), (snapshot) => {
       const data = snapshot.val();
 
       if (data) {
-        catalogue = Object.values(data).map(item => ({ ...item }));
+        catalogue = Object.values(data);
         console.log("✅ Catalogue Firebase chargé :", catalogue);
       } else {
         catalogue = [];
-        console.log("ℹ️ Catalogue Firebase vide");
+        console.log("⚠️ Catalogue vide sur Firebase");
       }
 
-      try {
-        if (typeof renderCatalogue === "function") renderCatalogue();
-      } catch (err) {
-        console.warn("renderCatalogue() indisponible pour l'instant :", err);
+      // 🔄 Met à jour automatiquement l’affichage quand les données changent
+      if (document.getElementById("catalogue-view") && 
+          !document.getElementById("catalogue-view").classList.contains("hidden")) {
+        renderCatalogue();
       }
     });
 
@@ -530,35 +527,7 @@
         .catch((err) => console.error("❌ Erreur Firebase :", err));
     }
 
-    async function updateAnimeFirebase(animeName, updatedData) {
-      try {
-        const snapshot = await get(ref(db, "catalogue"));
-        if (!snapshot.exists()) {
-         console.warn("⚠️ Catalogue vide sur Firebase");
-          return;
-        }
 
-        const data = snapshot.val();
-        const entry = Object.entries(data).find(
-          ([, anime]) =>
-            anime.name?.toLowerCase().trim() === animeName.toLowerCase().trim()
-        );
-
-        if (!entry) {
-          console.log(`ℹ️ "${animeName}" non trouvé sur Firebase`);
-          return;
-        }
-
-        const [key] = entry;
-
-        // ✅ Ne pas remplacer toute la fiche : on met à jour uniquement ce qui change
-        await update(ref(db, `catalogue/${key}`), updatedData);
-
-        console.log(`✅ Animé "${animeName}" mis à jour dans Firebase`);
-      } catch (err) {
-        console.error("❌ Erreur mise à jour Firebase :", err);
-      }
-    }
 
 	  
     const catalogueAddBtn = document.getElementById("catalogue-add-btn");
@@ -614,6 +583,13 @@
             console.error("❌ Erreur Firebase :", err);
             showMessage("Erreur lors de l’ajout dans Firebase", "error");
           });
+      
+    
+
+        addCatalogueModal.classList.add("hidden");
+        catalogueAddForm.reset();
+
+        showMessage(`✅ "${title}" ajouté au catalogue !`, "success");
       });
     }
 
@@ -964,6 +940,7 @@
     const mainView = document.getElementById('main-view');
     const catalogueView = document.getElementById('catalogue-view');
     const catalogueForm = document.getElementById('catalogue-form');
+    const catalogueName = document.getElementById('catalogue-name');
     const catalogueImage = document.getElementById('catalogue-image');
     const catalogueList = document.getElementById('catalogue-list');
     const aRegarderTitle = document.getElementById('a-regarder-title');
@@ -990,6 +967,18 @@
 
     let saveTimeout;
     let animes = [];
+    let catalogue = [];
+
+
+    // 🔽 Lire le catalogue partagé depuis Firebase
+    onValue(ref(db, "catalogue"), (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        catalogue = Object.values(data);
+        renderCatalogue(); // Met à jour ton affichage
+      }
+    });
+
 
     // Lecture compressée
     try {
@@ -1053,12 +1042,9 @@
       editModal.classList.add('hidden');
     }
 
-    editForm.addEventListener('submit', async (e) => {
+    editForm.addEventListener('submit', (e) => {
       e.preventDefault();
       if (!animeBeingEdited) return;
-	  
-	  const oldName = animeBeingEdited.name;
-	  
       animeBeingEdited.description = editDescription.value.trim();
       animeBeingEdited.tags = editTags.value.split(",").map(t => t.trim()).filter(t => t);
       animeBeingEdited.episodes = editEpisodes.value ? parseInt(editEpisodes.value, 10) : null;
@@ -1071,18 +1057,6 @@
       animeBeingEdited.completion = editCompletion.value || null;
       animeBeingEdited.language = editLanguage.value;
       saveDebounced();
-	  // 🔄 Synchronisation avec Firebase
-      updateAnimeFirebase(animeBeingEdited.name, {
-        name: animeBeingEdited.name,
-        image: animeBeingEdited.image || null,
-        tags: animeBeingEdited.tags || [],
-        episodes: animeBeingEdited.episodes || null,
-        description: animeBeingEdited.description || "",
-        films: animeBeingEdited.films || false,
-        language: animeBeingEdited.language || "VF",
-        note: animeBeingEdited.note || null,
-        completion: animeBeingEdited.completion || null
-      });
 
       // Vérifie si la vue détaillée est ouverte
       if (!detailView.classList.contains('hidden')) {
@@ -1092,18 +1066,7 @@
       }
 
       closeEditModal();
-	  // 🔹 Mets à jour aussi Firebase
-      await updateAnimeFirebase(oldName, {
-        name: animeBeingEdited.name,
-        image: animeBeingEdited.image,
-        tags: animeBeingEdited.tags,
-        episodes: animeBeingEdited.episodes,
-        description: animeBeingEdited.description,
-        films: animeBeingEdited.films,
-        language: animeBeingEdited.language,
-        note: animeBeingEdited.note,
-        completion: animeBeingEdited.completion
-      });
+
     });
     cancelEditBtn.addEventListener('click', closeEditModal);
 
@@ -1455,10 +1418,20 @@
     if (catalogueSearch) catalogueSearch.addEventListener("input", renderCatalogue);
 
 
-    // Le formulaire de recherche du catalogue ne doit pas ajouter en local.
-    if (catalogueForm) {
-      catalogueForm.addEventListener('submit', e => { e.preventDefault(); });
-    }
+    catalogueForm.addEventListener('submit',e=>{
+      e.preventDefault();
+      const newEntry={
+        name: catalogueName.value.trim(),
+        image: catalogueImage.value.trim()||null
+      };
+      if(!newEntry.name) return;
+      if(!catalogue.some(a=>isSameName(a.name,newEntry.name) || (a.image && newEntry.image && a.image===newEntry.image))){
+        catalogue.push(newEntry);
+      }
+      catalogueName.value=catalogueImage.value='';
+      saveDebounced(); renderCatalogue();
+    });
+
     searchInput.addEventListener('input',render);
     sortSelect.addEventListener('change',render);
     filterBtn.addEventListener('click',()=>{ filterEnAttente=!filterEnAttente; filterBtn.classList.toggle('active-filter',filterEnAttente); render(); });
@@ -1504,5 +1477,3 @@
   </script>
 </body>
 </html>
-
-
