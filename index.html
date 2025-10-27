@@ -526,26 +526,33 @@
         .then(() => console.log("✅ Ajouté sur Firebase"))
         .catch((err) => console.error("❌ Erreur Firebase :", err));
     }
-	// ✅ Mise à jour d’un animé dans Firebase
-    import { update, get, child } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+	import { update, get, ref } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-    async function updateAnimeFirebase(name, updatedData) {
+    async function updateAnimeFirebase(animeName, updatedData) {
       try {
         const snapshot = await get(ref(db, "catalogue"));
-        if (!snapshot.exists()) return console.log("⚠️ Catalogue vide sur Firebase");
+        if (!snapshot.exists()) {
+         console.warn("⚠️ Catalogue vide sur Firebase");
+          return;
+        }
 
         const data = snapshot.val();
         const entry = Object.entries(data).find(
-          ([, anime]) => anime.name?.toLowerCase().trim() === name.toLowerCase().trim()
+          ([, anime]) =>
+            anime.name?.toLowerCase().trim() === animeName.toLowerCase().trim()
         );
 
-        if (entry) {
-          const [key] = entry;
-          await update(ref(db, `catalogue/${key}`), updatedData);
-          console.log(`✅ Animé "${name}" mis à jour dans Firebase`);
-        } else {
-          console.log(`ℹ️ "${name}" non trouvé sur Firebase`);
+        if (!entry) {
+          console.log(`ℹ️ "${animeName}" non trouvé sur Firebase`);
+          return;
         }
+
+        const [key] = entry;
+
+        // ✅ Ne pas remplacer toute la fiche : on met à jour uniquement ce qui change
+        await update(ref(db, `catalogue/${key}`), updatedData);
+
+        console.log(`✅ Animé "${animeName}" mis à jour dans Firebase`);
       } catch (err) {
         console.error("❌ Erreur mise à jour Firebase :", err);
       }
@@ -1511,6 +1518,7 @@
   </script>
 </body>
 </html>
+
 
 
 
