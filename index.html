@@ -480,8 +480,8 @@
   <script type="module">
     // 🔧 Import cohérent (même version pour tous)
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-analytics.js";
+    import { getDatabase, ref, onValue, push, set, get, update } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+    // import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-analytics.js";
 
     // ✅ Configuration Firebase
     const firebaseConfig = {
@@ -497,25 +497,28 @@
 
     // ✅ Initialisation
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    const analytics = getAnalytics(app);
+    // const analytics = getAnalytics(app);
     const db = getDatabase(app); // <-- ne plante plus
 
-    // ✅ Lecture en direct du catalogue Firebase
+    // ✅ Catalogue en mémoire (déclaré avant les handlers Firebase)
+    let catalogue = [];
+
+    // ✅ Lecture en direct du catalogue Firebase (remplacé par une version robuste)
     onValue(ref(db, "catalogue"), (snapshot) => {
       const data = snapshot.val();
 
       if (data) {
-        catalogue = Object.values(data);
+        catalogue = Object.values(data).map(item => ({ ...item }));
         console.log("✅ Catalogue Firebase chargé :", catalogue);
       } else {
         catalogue = [];
-        console.log("⚠️ Catalogue vide sur Firebase");
+        console.log("ℹ️ Catalogue Firebase vide");
       }
 
-      // 🔄 Met à jour automatiquement l’affichage quand les données changent
-      if (document.getElementById("catalogue-view") && 
-          !document.getElementById("catalogue-view").classList.contains("hidden")) {
-        renderCatalogue();
+      try {
+        if (typeof renderCatalogue === "function") renderCatalogue();
+      } catch (err) {
+        console.warn("renderCatalogue() indisponible pour l'instant :", err);
       }
     });
 
@@ -968,7 +971,6 @@
     const mainView = document.getElementById('main-view');
     const catalogueView = document.getElementById('catalogue-view');
     const catalogueForm = document.getElementById('catalogue-form');
-    const catalogueName = document.getElementById('catalogue-name');
     const catalogueImage = document.getElementById('catalogue-image');
     const catalogueList = document.getElementById('catalogue-list');
     const aRegarderTitle = document.getElementById('a-regarder-title');
@@ -995,7 +997,6 @@
 
     let saveTimeout;
     let animes = [];
-    let catalogue = [];
 
 
     // 🔽 Lire le catalogue partagé depuis Firebase
@@ -1458,18 +1459,21 @@
     if (catalogueSearch) catalogueSearch.addEventListener("input", renderCatalogue);
 
 
-    catalogueForm.addEventListener('submit',e=>{
+    catalogueForm.addEventListener('submit', e => {
       e.preventDefault();
-      const newEntry={
-        name: catalogueName.value.trim(),
-        image: catalogueImage.value.trim()||null
-      };
-      if(!newEntry.name) return;
-      if(!catalogue.some(a=>isSameName(a.name,newEntry.name) || (a.image && newEntry.image && a.image===newEntry.image))){
+      const titleEl = document.getElementById('catalogue-title');
+      const imageEl = document.getElementById('catalogue-image');
+      const name = titleEl ? titleEl.value.trim() : "";
+      const image = imageEl ? imageEl.value.trim() || null : null;
+      if (!name) return;
+      const newEntry = { name, image };
+      if (!catalogue.some(a => isSameName(a.name, newEntry.name) || (a.image && newEntry.image && a.image === newEntry.image))) {
         catalogue.push(newEntry);
       }
-      catalogueName.value=catalogueImage.value='';
-      saveDebounced(); renderCatalogue();
+      if (titleEl) titleEl.value = '';
+      if (imageEl) imageEl.value = '';
+      saveDebounced();
+      renderCatalogue();
     });
 
     searchInput.addEventListener('input',render);
@@ -1517,4 +1521,3 @@
   </script>
 </body>
 </html>
-
