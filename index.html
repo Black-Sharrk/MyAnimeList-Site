@@ -743,6 +743,29 @@
           render();
           renderCatalogue();
           alert("✅ Liste importée !");
+		  // 🔄 Synchronisation avec Firebase
+          if (Array.isArray(animes)) {
+            animes.forEach(anime => {
+              // Vérifie si l'anime est déjà dans le catalogue partagé
+              const existeDeja = catalogue.some(a =>
+                a.name?.toLowerCase().trim() === anime.name?.toLowerCase().trim()
+              );
+
+              if (!existeDeja && anime.name) {
+                const entry = {
+                  name: anime.name,
+                  image: anime.image || null,
+                  tags: anime.tags || [],
+                  episodes: anime.episodes || null,
+                  description: anime.description || "",
+                  films: anime.films || false,
+                  language: anime.language || "VF"
+                };
+                ajouterAnimeFirebase(entry);
+              }
+            });
+            console.log("✅ Synchronisation Firebase terminée.");
+          }
         }catch(err){ alert("❌ Erreur de lecture du fichier"); }
       };
       reader.readAsText(file);
@@ -1437,5 +1460,6 @@
   </script>
 </body>
 </html>
+
 
 
