@@ -517,6 +517,40 @@
       render();
     });
 
+	// 🔁 Synchronise un animé (même nom) avec Firebase
+    async function syncWithFirebase(anime) {
+      if (!anime || !anime.name) return;
+
+      // On cherche s'il existe déjà dans le catalogue
+      const existing = catalogue.find(a =>
+        a.name.toLowerCase().trim() === anime.name.toLowerCase().trim()
+      );
+
+      const payload = {
+        name: anime.name,
+        image: anime.image || null,
+        description: anime.description || "",
+        tags: anime.tags || [],
+        episodes: anime.episodes || null,
+        films: anime.films || false,
+        language: anime.language || "VF"
+      };
+
+      try {
+        if (existing && existing.id) {
+          // ✅ Met à jour l'entrée existante
+          await set(ref(db, "catalogue/" + existing.id), payload);
+          console.log(`✅ Catalogue mis à jour : ${anime.name}`);
+        } else {
+          // ➕ Sinon ajoute une nouvelle entrée
+          await set(push(ref(db, "catalogue")), payload);
+          console.log(`🆕 Ajouté au catalogue : ${anime.name}`);
+        }
+      } catch (err) {
+        console.error("❌ Erreur sync Firebase :", err);
+      }
+    }
+
     // ✅ Exemple : ajout d’un animé
     function ajouterAnimeFirebase(anime) {
       set(push(ref(db, "catalogue")), anime)
@@ -1031,6 +1065,8 @@
       animeBeingEdited.completion = editCompletion.value || null;
       animeBeingEdited.language = editLanguage.value;
       saveDebounced();
+	  syncWithFirebase(animeBeingEdited);
+
 
       // Vérifie si la vue détaillée est ouverte
       if (!detailView.classList.contains('hidden')) {
@@ -1045,6 +1081,7 @@
     cancelEditBtn.addEventListener('click', closeEditModal);
 
     function renderDetail(anime) {
+	  anime = mergeWithCatalogue(anime);
       mainView.classList.add('hidden');
       catalogueView.classList.add('hidden');
       detailView.classList.remove('hidden');
@@ -1191,6 +1228,11 @@
       statsDiv.textContent = `📊 Total: ${total} | Vu: ${vus} | À regarder: ${aRegarder} | Épisodes vus: ${episodes} (~${temps}h)`;
     }
 
+	function mergeWithCatalogue(anime) {
+      const match = catalogue.find(c => c.name.toLowerCase() === anime.name.toLowerCase());
+      return match ? { ...match, ...anime } : anime;
+    }
+
 
     function render(){
       
@@ -1218,6 +1260,7 @@
       let countVu = 0;
 
       filtered.forEach(anime=>{
+		anime = mergeWithCatalogue(anime);
         const li = document.createElement('li');
         li.dataset.id = anime.id;
 
@@ -1367,7 +1410,42 @@
               console.error("⚠️ Impossible de trouver la modale 'add-complete-modal'");
             }
           });
+			
+		  const editBtn = createButton('✏️ Éditer', () => {
+          // Ouvre la modale d'édition et préremplit les champs avec les données catalogue
+          openEditModal(anime);
 
+          // Quand on sauvegarde, on met à jour aussi la liste locale
+          editForm.onsubmit = (e) => {
+            e.preventDefault();
+
+            // On récupère les nouvelles données du formulaire
+            const updated = {
+              name: editName.value.trim(),
+              image: editImage.value.trim() || null,
+              description: editDescription.value.trim(),
+              tags: editTags.value.split(",").map(t => t.trim()).filter(t => t),
+              episodes: editEpisodes.value ? parseInt(editEpisodes.value, 10) : null,
+              films: (editFilms.value === "true"),
+              language: editLanguage.value
+            };
+
+            // Mets à jour le catalogue dans Firebase
+            set(ref(db, "catalogue/" + anime.id), { ...anime, ...updated });
+
+            // Mets à jour tous les animés de la liste portant le même nom
+            animes.forEach(a => {
+              if (a.name.toLowerCase().trim() === anime.name.toLowerCase().trim()) {
+                Object.assign(a, updated);
+              }
+            });
+
+            saveDebounced();
+            render();
+            renderCatalogue();
+            closeEditModal();
+          };
+        });
 
           const deleteBtn = createButton('❌ Supprimer', () => {
             customConfirm(anime.name)
@@ -1383,7 +1461,7 @@
 
 
 
-          li.append(addBtn, deleteBtn);
+          li.append(addBtn, editBtn, deleteBtn);
           catalogueList.appendChild(li);
         });
     }
@@ -1444,4 +1522,5 @@
   </script>
 </body>
 </html>
+
 
