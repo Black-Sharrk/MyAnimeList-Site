@@ -500,15 +500,25 @@
     const analytics = getAnalytics(app);
     const db = getDatabase(app); // <-- ne plante plus
 
-    // ✅ Exemple : lecture du catalogue
+    // ✅ Lecture en direct du catalogue Firebase
     onValue(ref(db, "catalogue"), (snapshot) => {
       const data = snapshot.val();
+
       if (data) {
         catalogue = Object.values(data);
-        console.log("Catalogue chargé :", catalogue);
-        // renderCatalogue();
+        console.log("✅ Catalogue Firebase chargé :", catalogue);
+      } else {
+        catalogue = [];
+        console.log("⚠️ Catalogue vide sur Firebase");
+      }
+
+      // 🔄 Met à jour automatiquement l’affichage quand les données changent
+      if (document.getElementById("catalogue-view") && 
+          !document.getElementById("catalogue-view").classList.contains("hidden")) {
+        renderCatalogue();
       }
     });
+
 
     // ✅ Exemple : ajout d’un animé
     function ajouterAnimeFirebase(anime) {
@@ -1426,12 +1436,19 @@
     sortSelect.addEventListener('change',render);
     filterBtn.addEventListener('click',()=>{ filterEnAttente=!filterEnAttente; filterBtn.classList.toggle('active-filter',filterEnAttente); render(); });
     catalogueBtn.addEventListener('click',()=>{
-      catalogueMode=!catalogueMode;
+      catalogueMode = !catalogueMode;
       if(catalogueMode){
         mainView.classList.add('hidden');
         catalogueView.classList.remove('hidden');
-        renderCatalogue();
-      }else{
+
+        if (catalogue.length === 0) {
+          // 🔄 Si le catalogue Firebase n’est pas encore chargé
+          showMessage("⏳ Chargement du catalogue depuis Firebase...", "success");
+        } else {
+          renderCatalogue();
+        }
+
+      } else {
         mainView.classList.remove('hidden');
         catalogueView.classList.add('hidden');
         render();
@@ -1460,6 +1477,7 @@
   </script>
 </body>
 </html>
+
 
 
 
