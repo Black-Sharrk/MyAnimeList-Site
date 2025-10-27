@@ -614,13 +614,6 @@
             console.error("❌ Erreur Firebase :", err);
             showMessage("Erreur lors de l’ajout dans Firebase", "error");
           });
-      
-    
-
-        addCatalogueModal.classList.add("hidden");
-        catalogueAddForm.reset();
-
-        showMessage(`✅ "${title}" ajouté au catalogue !`, "success");
       });
     }
 
@@ -1459,23 +1452,10 @@
     if (catalogueSearch) catalogueSearch.addEventListener("input", renderCatalogue);
 
 
-    catalogueForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const titleEl = document.getElementById('catalogue-title');
-      const imageEl = document.getElementById('catalogue-image');
-      const name = titleEl ? titleEl.value.trim() : "";
-      const image = imageEl ? imageEl.value.trim() || null : null;
-      if (!name) return;
-      const newEntry = { name, image };
-      if (!catalogue.some(a => isSameName(a.name, newEntry.name) || (a.image && newEntry.image && a.image === newEntry.image))) {
-        catalogue.push(newEntry);
-      }
-      if (titleEl) titleEl.value = '';
-      if (imageEl) imageEl.value = '';
-      saveDebounced();
-      renderCatalogue();
-    });
-
+    // Le formulaire de recherche du catalogue ne doit pas ajouter en local.
+    if (catalogueForm) {
+      catalogueForm.addEventListener('submit', e => { e.preventDefault(); });
+    }
     searchInput.addEventListener('input',render);
     sortSelect.addEventListener('change',render);
     filterBtn.addEventListener('click',()=>{ filterEnAttente=!filterEnAttente; filterBtn.classList.toggle('active-filter',filterEnAttente); render(); });
